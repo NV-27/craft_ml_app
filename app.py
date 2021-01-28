@@ -197,7 +197,7 @@ try:
                 f"для данной задачи мы рекомендуем значение ({best_threshold})."
             )
             threshold = st.slider(
-                label=msg, min_value=0.0, max_value=1.0, value=0.7, step=best_threshold
+                label=msg, min_value=0.0, max_value=1.0, value=best_threshold, step=0.01
             )
             submit[target_name] = np.where(
                 prediction >= threshold, 1, 0
