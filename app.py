@@ -7,8 +7,9 @@ import xgboost as xgb
 import streamlit as st
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_curve, precision_recall_curve
+from sklearn.metrics import roc_curve, precision_recall_curve, f1_score
 from sklearn.metrics import roc_auc_score, average_precision_score
+from category_encoders.cat_boost import CatBoostEncoder
 
 
 @st.cache
@@ -33,6 +34,21 @@ def find_categorical_features(X: pd.DataFrame) -> List[str]:
         include=["object", "category"]
     )
     return categorical.columns.tolist()
+
+
+def find_best_threshold(y_true: np.array, y_pred: np.array) -> float:
+    thresholds = np.arange(0, 1, 0.01)
+    scores = []
+
+    for p in thresholds:
+        y_labels = np.where(
+            y_pred >= p, 1, 0
+        )
+        score = f1_score(y_true, y_labels)
+        scores.append(score)
+
+    best_threshold = thresholds[np.argmax(scores)]
+    return thresholds, scores, best_threshold
 
 
 def download_link(object_to_download, download_filename, download_link_text):
@@ -93,6 +109,11 @@ try:
 
     categorical_features = find_categorical_features(train)
     if categorical_features:
+        encoder = CatBoostEncoder()
+        encoded_features = encoder.fit_transform(
+            train[categorical_features], target
+        )
+        st.table(encoded_features.head())
         train = train.drop(categorical_features, axis=1)
         used_features = train.columns.tolist()
 
@@ -161,6 +182,26 @@ try:
             prediction = create_predictions(model, test)
             submit[target_name] = prediction
 
+            #if st.checkbox('Использовать метки классов (0/1), а не вероятности:'):
+            thresholds, scores, best_threshold = find_best_threshold(valid_target, y_valid_pred)
+
+            fig, axes = plt.subplots(1, 1, figsize=(15, 7))
+            axes.plot(thresholds, scores, linewidth=3)
+            axes.set_xlabel("thresholds", size=15)
+            axes.set_ylabel("F1-score", size=15)
+            axes.set_xlim(0, 1)
+            st.pyplot(fig)
+
+            msg = (
+                "Значение вероятности, при котором объект относится к классу 1, "
+                f"для данной задачи мы рекомендуем значение ({best_threshold})."
+            )
+            threshold = st.slider(
+                label=msg, min_value=0.0, max_value=1.0, value=0.7, step=best_threshold
+            )
+            submit[target_name] = np.where(
+                prediction >= threshold, 1, 0
+            )
             st.table(submit.head())
             tmp_download_link = download_link(submit, 'prediction.csv', 'Скачать прогнозы')
             st.markdown(tmp_download_link, unsafe_allow_html=True)
