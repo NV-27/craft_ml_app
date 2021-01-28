@@ -48,7 +48,7 @@ def find_best_threshold(y_true: np.array, y_pred: np.array) -> float:
         scores.append(score)
 
     best_threshold = thresholds[np.argmax(scores)]
-    return thresholds, scores, best_threshold
+    return thresholds, scores, float(best_threshold)
 
 
 def download_link(object_to_download, download_filename, download_link_text):
