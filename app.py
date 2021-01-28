@@ -72,7 +72,7 @@ try:
         'Выбрать столбец с целевой переменной',
         train.columns
     )
-    target = train[target_name]
+    target, train = train[target_name], train.drop(target_name, axis=1)
     if st.sidebar.checkbox('Показать распределение целевой переменной'):
         st.title("Распределение целевой переменной")
         hist_values = target.value_counts()
@@ -80,19 +80,24 @@ try:
 
     st.sidebar.title("Служебные переменные")
     msg = (
-        "Служебные столбцы не будут участвовать в обучении модели (ID-записи, даты, целевая переменная...)."
+        "Служебные столбцы не будут участвовать в обучении модели (ID-записи, даты,...)."
     )
     drop_columns = st.sidebar.multiselect(
         msg, train.columns,
     )
+    submit_columns = st.sidebar.multiselect(
+        "Столбцы для формирования файла с прогнозами", train.columns,
+    )
     if drop_columns:
         train = train.drop(drop_columns, axis=1)
-        categorical_features = find_categorical_features(train)
-        if categorical_features:
-            train = train.drop(categorical_features, axis=1)
-            used_features = train.columns.tolist()
-        st.title("Категориальные признаки")
-        st.text(categorical_features)
+
+    categorical_features = find_categorical_features(train)
+    if categorical_features:
+        train = train.drop(categorical_features, axis=1)
+        used_features = train.columns.tolist()
+
+    st.title("Категориальные признаки")
+    st.text(categorical_features)
 
     st.title("Обучение модели")
     train_size = st.slider(
@@ -145,16 +150,20 @@ try:
 
         st.pyplot(fig)
 
-    if st.button('Сохранить CSV-файл с прогнозами для тестовой выборки') and test_data:
-        test = load_data(test_data)
-        submit = test[drop_columns]
-        test = test[train_.columns]
+        if st.button('Сохранить CSV-файл с прогнозами для тестовой выборки') and test_data:
+            test = load_data(test_data)
+            if submit_columns:
+                submit = test[submit_columns]
+            else:
+                submit = pd.DataFrame()
 
-        prediction = create_predictions(model, test)
-        submit[target_name] = prediction
+            test = test[train_.columns]
+            prediction = create_predictions(model, test)
+            submit[target_name] = prediction
 
-        tmp_download_link = download_link(submit, 'prediction.csv', 'Скачать прогнозы')
-        st.markdown(tmp_download_link, unsafe_allow_html=True)
+            st.table(submit.head())
+            tmp_download_link = download_link(submit, 'prediction.csv', 'Скачать прогнозы')
+            st.markdown(tmp_download_link, unsafe_allow_html=True)
 
 except ValueError:
     pass
