@@ -1,6 +1,6 @@
 numpy==1.18.1
 streamlit==0.75.0
-craft_ml==0.2.1
+craft_ml==0.2.3
 pandas==1.0.1
 matplotlib==3.1.3
 scikit_learn==0.24.1
