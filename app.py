@@ -132,7 +132,12 @@ try:
         if st.sidebar.checkbox('Показать распределение целевой переменной'):
             st.title("Распределение целевой переменной")
             hist_values = target.value_counts()
-            st.bar_chart(hist_values)
+            fig, ax = plt.subplots()
+            ax.bar(hist_values.index, hist_values.values, color="#ff294d")
+            ax.set_xticks(hist_values.index)
+            ax.set_xticklabels(hist_values.index, rotation='vertical')
+            st.pyplot(fig)
+            #st.bar_chart(hist_values, color="ff294d")
 
         st.sidebar.title("Служебные переменные")
         msg = (
@@ -178,9 +183,9 @@ try:
 
             fig, axes = plt.subplots(1, 2, figsize=(20, 10))
             fpr, tpr, _ = roc_curve(valid_target, y_valid_pred)
-            axes[0].plot(fpr, tpr, linewidth=3, label=f"Valid score = {round(valid_score, 4)}")
+            axes[0].plot(fpr, tpr, linewidth=3, label=f"Valid score = {round(valid_score, 4)}", color="#ff294d")
             fpr, tpr, _ = roc_curve(train_target, y_train_pred)
-            axes[0].plot(fpr, tpr, linewidth=3, label=f"Train score = {round(train_score, 4)}")
+            axes[0].plot(fpr, tpr, linewidth=3, label=f"Train score = {round(train_score, 4)}", color="#262222")
             axes[0].plot([0, 1], [0, 1], linestyle="--", color="black", label="baseline", alpha=0.25)
             axes[0].set_xlabel("False Positive Rate", size=15)
             axes[0].set_ylabel("True Positive Rate", size=15)
@@ -192,11 +197,11 @@ try:
             valid_score = average_precision_score(valid_target, y_valid_pred)
             train_score = average_precision_score(train_target, y_train_pred)
             precision, recall, thresholds = precision_recall_curve(valid_target, y_valid_pred)
-            axes[1].plot(recall, precision, linewidth=3, label=f"Valid score = {round(valid_score, 4)}")
+            axes[1].plot(recall, precision, linewidth=3, label=f"Valid score = {round(valid_score, 4)}", color="#ff294d")
             fpr, tpr = [0, 1], [np.mean(valid_target), np.mean(valid_target)]
             axes[1].plot(fpr, tpr, linestyle="--", color="black", alpha=0.25)
             precision, recall, _ = precision_recall_curve(train_target, y_train_pred)
-            axes[1].plot(recall, precision, linewidth=3, label=f"Train score = {round(valid_score, 4)}")
+            axes[1].plot(recall, precision, linewidth=3, label=f"Train score = {round(valid_score, 4)}", color="#262222")
             fpr, tpr = [0, 1], [np.mean(train_target), np.mean(train_target)]
             axes[1].plot(fpr, tpr, linestyle="--", color="black", alpha=0.25, label="baseline")
             axes[1].set_title("Precision-Recall-Curve", size=15)
@@ -224,7 +229,7 @@ try:
                     selected_threshold = threshold
 
                 fig, axes = plt.subplots(1, 1, figsize=(15, 7))
-                axes.plot(thresholds, scores, linewidth=3)
+                axes.plot(thresholds, scores, linewidth=3, color="#ff294d")
                 axes.set_xlabel("thresholds", size=15)
                 axes.set_ylabel("F1-score", size=15)
                 axes.set_xlim(thresholds.min(), thresholds.max())
